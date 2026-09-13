@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Ghost Open World</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+    font-family:Tahoma,Arial,sans-serif;
+}
+
+#game{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+#loading{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:#020406;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    color:white;
+    transition:opacity .5s;
+}
+
+.loader{
+    width:48px;
+    height:48px;
+    border:3px solid rgba(255,255,255,.12);
+    border-top-color:#45b9ff;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+
+.loadTitle{
+    margin-top:20px;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.loadText{
+    margin-top:8px;
+    color:#8793a0;
+    font-size:12px;
+}
+
+#hud{
+    position:fixed;
+    inset:0;
+    z-index:20;
+    pointer-events:none;
+    color:white;
+}
+
+.top{
+    position:absolute;
+    top:max(14px,env(safe-area-inset-top));
+    left:14px;
+    right:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+}
+
+.card{
+    background:rgba(5,9,13,.62);
+    border:1px solid rgba(255,255,255,.1);
+    backdrop-filter:blur(10px);
+    border-radius:14px;
+    padding:9px 12px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
+}
+
+.hp{
+    min-width:145px;
+}
+
+.hpTitle{
+    font-size:10px;
+    color:#aeb9c5;
+}
+
+.bar{
+    width:120px;
+    height:7px;
+    margin-top:5px;
+    border-radius:10px;
+    overflow:hidden;
+    background:#222a32;
+}
+
+.hpFill{
+    width:100%;
+    height:100%;
+    background:#5ce59a;
+}
+
+.energy{
+    margin-top:5px;
+}
+
+.energyFill{
+    width:100%;
+    height:100%;
+    background:#55baff;
+}
+
+.location{
+    text-align:right;
+    min-width:125px;
+}
+
+.locationName{
+    font-size:12px;
+    font-weight:bold;
+}
+
+.locationSub{
+    margin-top:3px;
+    color:#9ca8b4;
+    font-size:9px;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:24px;
+    height:24px;
+    transform:translate(-50%,-50%);
+}
+
+#crosshair:before,
+#crosshair:after{
+    content:"";
+    position:absolute;
+    background:rgba(255,255,255,.75);
+}
+
+#crosshair:before{
+    width:2px;
+    height:24px;
+    left:11px;
+}
+
+#crosshair:after{
+    width:24px;
+    height:2px;
+    top:11px;
+}
+
+#crossDot{
+    position:absolute;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:white;
+    left:10px;
+    top:10px;
+}
+
+#bottom{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:max(12px,env(safe-area-inset-bottom));
+    height:150px;
+}
+
+#joystick{
+    position:absolute;
+    left:22px;
+    bottom:10px;
+    width:115px;
+    height:115px;
+    border-radius:50%;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.12);
+    pointer-events:auto;
+    touch-action:none;
+}
+
+#stick{
+    position:absolute;
+    width:52px;
+    height:52px;
+    left:31px;
+    top:31px;
+    border-radius:50%;
+    background:rgba(80,180,240,.35);
+    border:1px solid rgba(120,210,255,.5);
+    box-shadow:0 0 20px rgba(60,170,230,.18);
+}
+
+.actions{
+    position:absolute;
+    right:18px;
+    bottom:8px;
+    display:flex;
+    gap:9px;
+    direction:ltr;
+    pointer-events:auto;
+}
+
+.action{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.13);
+    background:rgba(8,13,19,.7);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:21px;
+    touch-action:none;
+}
+
+.action:active{
+    transform:scale(.92);
+    background:rgba(50,120,160,.7);
+}
+
+#exit{
+    position:absolute;
+    right:14px;
+    top:75px;
+    pointer-events:auto;
+    background:rgba(5,9,13,.65);
+    color:#ddd;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:10px;
+    padding:8px 12px;
+    font-size:10px;
+}
+
+#mini{
+    position:absolute;
+    left:14px;
+    top:76px;
+    width:90px;
+    height:90px;
+    border-radius:12px;
+    background:rgba(5,10,14,.68);
+    border:1px solid rgba(255,255,255,.1);
+    overflow:hidden;
+}
+
+#miniCanvas{
+    width:100%;
+    height:100%;
+}
+
+#message{
+    position:absolute;
+    left:50%;
+    top:18%;
+    transform:translateX(-50%);
+    background:rgba(4,8,12,.75);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;
+    padding:10px 15px;
+    font-size:11px;
+    opacity:0;
+    transition:.3s;
+}
+
+#weather{
+    position:absolute;
+    right:15px;
+    bottom:165px;
+    font-size:10px;
+    color:#aeb9c5;
+}
+
+@media(min-width:700px){
+    #joystick{
+        width:130px;
+        height:130px;
+    }
+
+    #stick{
+        width:58px;
+        height:58px;
+        left:35px;
+        top:35px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="loading">
+    <div class="loader"></div>
+    <div class="loadTitle">GHOST OPEN WORLD</div>
+    <div class="loadText" id="loadText">در حال ساخت جهان...</div>
+</div>
+
+<div id="hud">
+
+    <div class="top">
+
+        <div class="card hp">
+            <div class="hpTitle">سلامت</div>
+            <div class="bar">
+                <div class="hpFill"></div>
+            </div>
+
+            <div class="hpTitle energy">
+                انرژی
+            </div>
+
+            <div class="bar">
+                <div class="energyFill"></div>
+            </div>
+        </div>
+
+        <div class="card location">
+            <div class="locationName" id="locationName">
+                حومه شهر
+            </div>
+            <div class="locationSub" id="coords">
+                0 / 0
+            </div>
+        </div>
+
+    </div>
+
+    <button id="exit" onclick="location.href='index.html'">
+        خروج
+    </button>
+
+    <div id="mini">
+        <canvas id="miniCanvas" width="180" height="180"></canvas>
+    </div>
+
+    <div id="crosshair">
+        <div id="crossDot"></div>
+    </div>
+
+    <div id="message"></div>
+
+    <div id="weather">
+        ☀️ روز آرام
+    </div>
+
+    <div id="bottom">
+
+        <div id="joystick">
+            <div id="stick"></div>
+        </div>
+
+        <div class="actions">
+            <button class="action" id="jump">↑</button>
+            <button class="action" id="run">⚡</button>
+            <button class="action" id="scan">◉</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
+
+<script>
+"use strict";
+
+/* =========================================================
+   GHOST OPEN WORLD
+   Single-file mobile open world
+========================================================= */
+
+let scene;
+let camera;
+let renderer;
+let clock;
+
+let player;
+let playerGroup;
+
+let worldTime = 0.28;
+let weather = 0;
+
+const WORLD = 1800;
+const TERRAIN_SEGMENTS = 90;
+
+const keys = {
+    forward:false,
+    backward:false,
+    left:false,
+    right:false,
+    run:false,
+    jump:false
+};
+
+const joystick = {
+    x:0,
+    y:0,
+    active:false
+};
+
+let cameraYaw = 0;
+let cameraPitch = 0.25;
+
+let cameraTouch = null;
+let cameraTouchX = 0;
+let cameraTouchY = 0;
+
+let velocityY = 0;
+let grounded = true;
+
+const colliders = [];
+const buildings = [];
+const trees = [];
+
+const loadingText = document.getElementById("loadText");
+const message = document.getElementById("message");
+
+function loadMessage(t){
+    loadingText.textContent = t;
+}
+
+/* =========================================================
+   RENDERER
+========================================================= */
+
+function createRenderer(){
+
+    renderer = new THREE.WebGLRenderer({
+        canvas:document.getElementById("game"),
+        antialias:true,
+        powerPreference:"high-performance"
+    });
+
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio || 1,1.5)
+    );
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight,
+        false
+    );
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+}
+
+/* =========================================================
+   SCENE
+========================================================= */
+
+function createScene(){
+
+    scene = new THREE.Scene();
+
+    scene.background = new THREE.Color(0x91b9d1);
+
+    scene.fog = new THREE.FogExp2(
+        0x91b9d1,
+        0.00075
+    );
+
+    camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth/window.innerHeight,
+        0.1,
+        3000
+    );
+
+    clock = new THREE.Clock();
+}
+
+/* =========================================================
+   LIGHT
+========================================================= */
+
+let sun;
+let ambient;
+
+function createLights(){
+
+    ambient = new THREE.HemisphereLight(
+        0xbfd8e8,
+        0x40503c,
+        1.8
+    );
+
+    scene.add(ambient);
+
+    sun = new THREE.DirectionalLight(
+        0xfff0d0,
+        3
+    );
+
+    sun.position.set(
+        500,
+        700,
+        300
+    );
+
+    sun.castShadow = true;
+
+    sun.shadow.mapSize.set(1024,1024);
+
+    sun.shadow.camera.left = -600;
+    sun.shadow.camera.right = 600;
+    sun.shadow.camera.top = 600;
+    sun.shadow.camera.bottom = -600;
+
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 1800;
+
+    scene.add(sun);
+}
+
+/* =========================================================
+   TERRAIN
+========================================================= */
+
+function heightAt(x,z){
+
+    let h = 0;
+
+    h += Math.sin(x * 0.0045) * 14;
+    h += Math.cos(z * 0.0050) * 13;
+
+    h += Math.sin((x+z) * 0.009) * 7;
+    h += Math.cos((x-z) * 0.012) * 5;
+
+    const mountains =
+        Math.max(
+            0,
+            1 -
+            Math.sqrt(x*x+z*z)/650
+        );
+
+    h += mountains * 45;
+
+    const cityFlat =
+        Math.max(
+            0,
+            1 -
+            Math.sqrt(
+                (x+120)*(x+120)+
+                (z-80)*(z-80)
+            )/350
+        );
+
+    h *= 1 - cityFlat * .85;
+
+    return h;
+}
+
+function terrainColor(y){
+
+    if(y < 3)
+        return new THREE.Color(0x667451);
+
+    if(y < 18)
+        return new THREE.Color(0x526947);
+
+    if(y < 35)
+        return new THREE.Color(0x46583f);
+
+    return new THREE.Color(0x59605b);
+}
+
+function createTerrain(){
+
+    loadMessage("ساخت زمین سه‌بعدی...");
+
+    const geo = new THREE.PlaneGeometry(
+        WORLD,
+        WORLD,
+        TERRAIN_SEGMENTS,
+        TERRAIN_SEGMENTS
+    );
+
+    geo.rotateX(-Math.PI/2);
+
+    const pos = geo.attributes.position;
+
+    const colors = [];
+
+    for(let i=0;i<pos.count;i++){
+
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+
+        const y = heightAt(x,z);
+
+        pos.setY(i,y);
+
+        const c = terrainColor(y);
+
+        colors.push(c.r,c.g,c.b);
+    }
+
+    geo.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colors,3)
+    );
+
+    geo.computeVertexNormals();
+
+    const mat = new THREE.MeshStandardMaterial({
+        vertexColors:true,
+        roughness:.95,
+        metalness:0
+    });
+
+    const terrain = new THREE.Mesh(
+        geo,
+        mat
+    );
+
+    terrain.receiveShadow = true;
+
+    scene.add(terrain);
+}
+
+/* =========================================================
+   WATER
+========================================================= */
+
+function createWater(){
+
+    const waterGeo = new THREE.PlaneGeometry(
+        1050,
+        700,
+        1,
+        1
+    );
+
+    waterGeo.rotateX(-Math.PI/2);
+
+    const waterMat = new THREE.MeshPhysicalMaterial({
+        color:0x287a91,
+        transparent:true,
+        opacity:.72,
+        roughness:.15,
+        metalness:.05
+    });
+
+    const water = new THREE.Mesh(
+        waterGeo,
+        waterMat
+    );
+
+    water.position.set(
+        430,
+        2,
+        -300
+    );
+
+    scene.add(water);
+}
+
+/* =========================================================
+   ROADS
+========================================================= */
+
+function createRoad(x,z,w,d){
+
+    const roadGeo = new THREE.BoxGeometry(
+        w,
+        .12,
+        d
+    );
+
+    const roadMat = new THREE.MeshStandardMaterial({
+        color:0x25282b,
+        roughness:.95
+    });
+
+    const road = new THREE.Mesh(
+        roadGeo,
+        roadMat
+    );
+
+    road.position.set(
+        x,
+        heightAt(x,z)+.07,
+        z
+    );
+
+    road.receiveShadow = true;
+
+    scene.add(road);
+
+    if(w>d){
+
+        for(let px=x-w/2+12;px<x+w/2;px+=28){
+
+            const line = new THREE.Mesh(
+                new THREE.BoxGeometry(8,.03,.18),
+                new THREE.MeshBasicMaterial({
+                    color:0xd4c58a
+                })
+            );
+
+            line.position.set(
+                px,
+                road.position.y+.08,
+                z
+            );
+
+            scene.add(line);
+        }
+
+    }else{
+
+        for(let pz=z-d/2+12;pz<z+d/2;pz+=28){
+
+            const line = new THREE.Mesh(
+                new THREE.BoxGeometry(.18,.03,8),
+                new THREE.MeshBasicMaterial({
+                    color:0xd4c58a
+                })
+            );
+
+            line.position.set(
+                x,
+                road.position.y+.08,
+                pz
+            );
+
+            scene.add(line);
+        }
+    }
+}
+
+function createRoadNetwork(){
+
+    createRoad(
+        -100,
+        80,
+        900,
+        18
+    );
+
+    createRoad(
+        80,
+        -100,
+        18,
+        900
+    );
+
+    createRoad(
+        260,
+        180,
+        600,
+        15
+    );
+
+    createRoad(
+        -350,
+        -280,
+        700,
+        16
+    );
+
+    createRoad(
+        -250,
+        350,
+        18,
+        500
+    );
+}
+
+/* =========================================================
+   BUILDINGS
+========================================================= */
+
+function createBuilding(x,z,w,d,h){
+
+    const y = heightAt(x,z);
+
+    const group = new THREE.Group();
+
+    const bodyGeo = new THREE.BoxGeometry(
+        w,
+        h,
+        d
+    );
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+        color:
+            Math.random()>.5
+            ?0x555b60
+            :0x3e454b,
+        roughness:.8
+    });
+
+    const body = new THREE.Mesh(
+        bodyGeo,
+        bodyMat
+    );
+
+    body.position.y = h/2;
+
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    group.add(body);
+
+    const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(
+            w+.4,
+            .3,
+            d+.4
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x24292d,
+            roughness:.8
+        })
+    );
+
+    roof.position.y = h+.15;
+
+    roof.castShadow = true;
+
+    group.add(roof);
+
+    const floors = Math.max(
+        1,
+        Math.floor(h/4)
+    );
+
+    const windowsPerSide =
+        Math.max(
+            1,
+            Math.floor(w/5)
+        );
+
+    for(let floor=0;floor<floors;floor++){
+
+        const wy = 2 + floor*4;
+
+        for(let i=0;i<windowsPerSide;i++){
+
+            const wx =
+                -w/2+2.5+i*5;
+
+            const windowMat =
+                new THREE.MeshBasicMaterial({
+                    color:
+                        Math.random()>.78
+                        ?0xffd56a
+                        :0x18252d
+                });
+
+            const win = new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    1.7,
+                    2
+                ),
+                windowMat
+            );
+
+            win.position.set(
+                wx,
+                wy,
+                d/2+.01
+            );
+
+            group.add(win);
+        }
+    }
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+    scene.add(group);
+
+    colliders.push({
+        x:x,
+        z:z,
+        w:w,
+        d:d
+    });
+
+    buildings.push(group);
+}
+
+function createCity(){
+
+    loadMessage("ساخت شهر و ساختمان‌ها...");
+
+    const startX = -430;
+    const startZ = -270;
+
+    for(let ix=0;ix<10;ix++){
+
+        for(let iz=0;iz<8;iz++){
+
+            const x =
+                startX+
+                ix*75+
+                (Math.random()-.5)*18;
+
+            const z =
+                startZ+
+                iz*75+
+                (Math.random()-.5)*18;
+
+            if(
+                Math.abs(x+100)<28 ||
+                Math.abs(z-80)<28 ||
+                Math.abs(x-80)<28 ||
+                Math.abs(z+100)<28
+            ){
+                continue;
+            }
+
+            const w =
+                25+
+                Math.random()*25;
+
+            const d =
+                25+
+                Math.random()*25;
+
+            const h =
+                12+
+                Math.random()*50;
+
+            createBuilding(
+                x,
+                z,
+                w,
+                d,
+                h
+            );
+        }
+    }
+}
+
+/* =========================================================
+   TREES
+========================================================= */
+
+function createTree(x,z,scale=1){
+
+    const y = heightAt(x,z);
+
+    const group = new THREE.Group();
+
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            .35*scale,
+            .5*scale,
+            5*scale,
+            6
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x4b3627,
+            roughness:1
+        })
+    );
+
+    trunk.position.y=2.5*scale;
+    trunk.castShadow=true;
+
+    group.add(trunk);
+
+    const crown = new THREE.Mesh(
+        new THREE.ConeGeometry(
+            3.4*scale,
+            8*scale,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x284d32,
+            roughness:1
+        })
+    );
+
+    crown.position.y=8*scale;
+    crown.castShadow=true;
+
+    group.add(crown);
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+    scene.add(group);
+    trees.push(group);
+}
+
+function createForest(){
+
+    loadMessage("ساخت جنگل و طبیعت...");
+
+    for(let i=0;i<260;i++){
+
+        let x =
+            -750+
+            Math.random()*1500;
+
+        let z =
+            -700+
+            Math.random()*1400;
+
+        const nearCity =
+            x>-480 &&
+            x<350 &&
+            z>-320 &&
+            z<350;
+
+        if(nearCity) continue;
+
+        const y=heightAt(x,z);
+
+        if(y<5) continue;
+
+        createTree(
+            x,
+            z,
+            .65+Math.random()*.8
+        );
+    }
+}
+
+/* =========================================================
+   ROCKS
+========================================================= */
+
+function createRocks(){
+
+    for(let i=0;i<100;i++){
+
+        const x =
+            -800+
+            Math.random()*1600;
+
+        const z =
+            -750+
+            Math.random()*1500;
+
+        const y=heightAt(x,z);
+
+        if(y<10) continue;
+
+        const rock = new THREE.Mesh(
+            new THREE.DodecahedronGeometry(
+                1+Math.random()*3,
+                0
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x50565a,
+                roughness:1
+            })
+        );
+
+        rock.position.set(
+            x,
+            y+1,
+            z
+        );
+
+        rock.scale.y=.6+Math.random()*.6;
+        rock.rotation.y=Math.random()*6;
+
+        rock.castShadow=true;
+        rock.receiveShadow=true;
+
+        scene.add(rock);
+    }
+}
+
+/* =========================================================
+   CHARACTER
+========================================================= */
+
+function createPlayer(){
+
+    playerGroup = new THREE.Group();
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+        color:0x252c33,
+        roughness:.8
+    });
+
+    const skinMat = new THREE.MeshStandardMaterial({
+        color:0xb98665,
+        roughness:.9
+    });
+
+    const darkMat = new THREE.MeshStandardMaterial({
+        color:0x11151a,
+        roughness:.8
+    });
+
+    const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(
+            1.35,
+            1.8,
+            .7
+        ),
+        bodyMat
+    );
+
+    torso.position.y=2.6;
+    torso.castShadow=true;
+
+    playerGroup.add(torso);
+
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .48,
+            12,
+            10
+        ),
+        skinMat
+    );
+
+    head.position.y=4;
+    head.castShadow=true;
+
+    playerGroup.add(head);
+
+    const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .49,
+            12,
+            8,
+            0,
+            Math.PI*2,
+            0,
+            Math.PI*.45
+        ),
+        darkMat
+    );
+
+    hair.position.y=4.1;
+    hair.castShadow=true;
+
+    playerGroup.add(hair);
+
+    const armL = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            .19,.21,1.7,8
+        ),
+        bodyMat
+    );
+
+    armL.position.set(
+        -.9,
+        2.65,
+        0
+    );
+
+    armL.rotation.z=-.12;
+    armL.castShadow=true;
+
+    playerGroup.add(armL);
+
+    const armR = armL.clone();
+
+    armR.position.x=.9;
+    armR.rotation.z=.12;
+
+    playerGroup.add(armR);
+
+    const legL = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            .23,.25,1.9,8
+        ),
+        darkMat
+    );
+
+    legL.position.set(
+        -.38,
+        1,
+        0
+    );
+
+    legL.castShadow=true;
+
+    playerGroup.add(legL);
+
+    const legR = legL.clone();
+
+    legR.position.x=.38;
+
+    playerGroup.add(legR);
+
+    const shadow = new THREE.Mesh(
+        new THREE.CircleGeometry(
+            1.1,
+            24
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0x000000,
+            transparent:true,
+            opacity:.28
+        })
+    );
+
+    shadow.rotation.x=-Math.PI/2;
+    shadow.position.y=.03;
+
+    playerGroup.add(shadow);
+
+    playerGroup.position.set(
+        -80,
+        heightAt(-80,60),
+        60
+    );
+
+    player = {
+        group:playerGroup,
+        torso:torso,
+        armL:armL,
+        armR:armR,
+        legL:legL,
+        legR:legR,
+        speed:8,
+        runSpeed:14,
+        moving:false
+    };
+
+    scene.add(playerGroup);
+
+    loadSavedPosition();
+}
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+function savePosition(){
+
+    if(!player) return;
+
+    localStorage.setItem(
+        "ghost_open_world_position",
+        JSON.stringify({
+            x:player.group.position.x,
+            z:player.group.position.z
+        })
+    );
+}
+
+function loadSavedPosition(){
+
+    try{
+
+        const data =
+            JSON.parse(
+                localStorage.getItem(
+                    "ghost_open_world_position"
+                )
+            );
+
+        if(data){
+
+            player.group.position.x=data.x;
+            player.group.position.z=data.z;
+
+            player.group.position.y =
+                heightAt(
+                    data.x,
+                    data.z
+                );
+        }
+
+    }catch(e){}
+}
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+function setupKeyboard(){
+
+    window.addEventListener(
+        "keydown",
+        e=>{
+
+            if(e.code==="KeyW"||e.code==="ArrowUp")
+                keys.forward=true;
+
+            if(e.code==="KeyS"||e.code==="ArrowDown")
+                keys.backward=true;
+
+            if(e.code==="KeyA"||e.code==="ArrowLeft")
+                keys.left=true;
+
+            if(e.code==="KeyD"||e.code==="ArrowRight")
+                keys.right=true;
+
+            if(e.code==="ShiftLeft")
+                keys.run=true;
+
+            if(e.code==="Space")
+                jump();
+        }
+    );
+
+    window.addEventListener(
+        "keyup",
+        e=>{
+
+            if(e.code==="KeyW"||e.code==="ArrowUp")
+                keys.forward=false;
+
+            if(e.code==="KeyS"||e.code==="ArrowDown")
+                keys.backward=false;
+
+            if(e.code==="KeyA"||e.code==="ArrowLeft")
+                keys.left=false;
+
+            if(e.code==="KeyD"||e.code==="ArrowRight")
+                keys.right=false;
+
+            if(e.code==="ShiftLeft")
+                keys.run=false;
+        }
+    );
+}
+
+/* =========================================================
+   JOYSTICK
+========================================================= */
+
+function setupJoystick(){
+
+    const zone =
+        document.getElementById("joystick");
+
+    const stick =
+        document.getElementById("stick");
+
+    let startX=0;
+    let startY=0;
+
+    zone.addEventListener(
+        "touchstart",
+        e=>{
+
+            const t=e.changedTouches[0];
+
+            const r=zone.getBoundingClientRect();
+
+            startX=r.left+r.width/2;
+            startY=r.top+r.height/2;
+
+            joystick.active=true;
+
+            updateStick(
+                t.clientX,
+                t.clientY,
+                startX,
+                startY,
+                stick
+            );
+
+        },
+        {passive:false}
+    );
+
+    zone.addEventListener(
+        "touchmove",
+        e=>{
+
+            e.preventDefault();
+
+            const t=e.changedTouches[0];
+
+            updateStick(
+                t.clientX,
+                t.clientY,
+                startX,
+                startY,
+                stick
+            );
+
+        },
+        {passive:false}
+    );
+
+    zone.addEventListener(
+        "touchend",
+        ()=>{
+
+            joystick.active=false;
+            joystick.x=0;
+            joystick.y=0;
+
+            stick.style.transform=
+                "translate(0px,0px)";
+        }
+    );
+}
+
+function updateStick(x,y,cx,cy,stick){
+
+    let dx=x-cx;
+    let dy=y-cy;
+
+    const max=38;
+
+    const len=Math.sqrt(
+        dx*dx+dy*dy
+    );
+
+    if(len>max){
+
+        dx=dx/len*max;
+        dy=dy/len*max;
+    }
+
+    joystick.x=dx/max;
+    joystick.y=dy/max;
+
+    stick.style.transform=
+        `translate(${dx}px,${dy}px)`;
+}
+
+/* =========================================================
+   CAMERA TOUCH
+========================================================= */
+
+function setupCameraTouch(){
+
+    document.addEventListener(
+        "touchstart",
+        e=>{
+
+            for(const t of e.changedTouches){
+
+                if(
+                    t.clientX<160 &&
+                    t.clientY>
+                    window.innerHeight-180
+                ) continue;
+
+                if(
+                    t.clientX>
+                    window.innerWidth-160 &&
+                    t.clientY>
+                    window.innerHeight-180
+                ) continue;
+
+                cameraTouch=t.identifier;
+                cameraTouchX=t.clientX;
+                cameraTouchY=t.clientY;
+            }
+        },
+        {passive:true}
+    );
+
+    document.addEventListener(
+        "touchmove",
+        e=>{
+
+            if(cameraTouch===null) return;
+
+            for(const t of e.changedTouches){
+
+                if(t.identifier!==cameraTouch)
+                    continue;
+
+                const dx=
+                    t.clientX-cameraTouchX;
+
+                const dy=
+                    t.clientY-cameraTouchY;
+
+                cameraYaw -= dx*.006;
+                cameraPitch -= dy*.003;
+
+                cameraPitch=
+                    Math.max(
+                        -.1,
+                        Math.min(.65,cameraPitch)
+                    );
+
+                cameraTouchX=t.clientX;
+                cameraTouchY=t.clientY;
+            }
+        },
+        {passive:true}
+    );
+
+    document.addEventListener(
+        "touchend",
+        e=>{
+
+            for(const t of e.changedTouches){
+
+                if(t.identifier===cameraTouch)
+                    cameraTouch=null;
+            }
+        }
+    );
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+function jump(){
+
+    if(!grounded) return;
+
+    velocityY=9;
+    grounded=false;
+}
+
+document.getElementById("jump")
+.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    jump();
+},{passive:false});
+
+document.getElementById("run")
+.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    keys.run=true;
+},{passive:false});
+
+document.getElementById("run")
+.addEventListener("touchend",()=>{
+    keys.run=false;
+});
+
+document.getElementById("scan")
+.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    showMessage("📡 منطقه اسکن شد");
+},{passive:false});
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function blocked(x,z){
+
+    for(const b of colliders){
+
+        if(
+            x>b.x-b.w/2-1.2 &&
+            x<b.x+b.w/2+1.2 &&
+            z>b.z-b.d/2-1.2 &&
+            z<b.z+b.d/2+1.2
+        ){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/* =========================================================
+   MOVEMENT
+========================================================= */
+
+let walkTime=0;
+
+function updatePlayer(dt){
+
+    if(!player) return;
+
+    let mx=0;
+    let mz=0;
+
+    mx += joystick.x;
+    mz += joystick.y;
+
+    if(keys.left) mx-=1;
+    if(keys.right) mx+=1;
+    if(keys.forward) mz-=1;
+    if(keys.backward) mz+=1;
+
+    const length=Math.sqrt(
+        mx*mx+mz*mz
+    );
+
+    if(length>1){
+
+        mx/=length;
+        mz/=length;
+    }
+
+    player.moving=
+        Math.abs(mx)>.05 ||
+        Math.abs(mz)>.05;
+
+    const speed =
+        keys.run
+        ?player.runSpeed
+        :player.speed;
+
+    if(player.moving){
+
+        const angle=
+            cameraYaw;
+
+        const worldX=
+            mx*Math.cos(angle)-
+            mz*Math.sin(angle);
+
+        const worldZ=
+            mx*Math.sin(angle)+
+            mz*Math.cos(angle);
+
+        const nx=
+            player.group.position.x+
+            worldX*speed*dt;
+
+        const nz=
+            player.group.position.z+
+            worldZ*speed*dt;
+
+        if(
+            Math.abs(nx)<WORLD/2-20 &&
+            !blocked(nx,player.group.position.z)
+        ){
+            player.group.position.x=nx;
+        }
+
+        if(
+            Math.abs(nz)<WORLD/2-20 &&
+            !blocked(player.group.position.x,nz)
+        ){
+            player.group.position.z=nz;
+        }
+
+        player.group.rotation.y=
+            Math.atan2(
+                worldX,
+                worldZ
+            );
+
+        walkTime+=dt*
+            (keys.run?12:8);
+
+    }
+
+    const ground=
+        heightAt(
+            player.group.position.x,
+            player.group.position.z
+        );
+
+    velocityY-=22*dt;
+
+    player.group.position.y+=
+        velocityY*dt;
+
+    if(
+        player.group.position.y<=ground
+    ){
+
+        player.group.position.y=ground;
+        velocityY=0;
+        grounded=true;
+    }
+
+    if(player.moving){
+
+        const swing=
+            Math.sin(walkTime)*.65;
+
+        player.legL.rotation.x=swing;
+        player.legR.rotation.x=-swing;
+
+        player.armL.rotation.x=-swing*.7;
+        player.armR.rotation.x=swing*.7;
+
+    }else{
+
+        player.legL.rotation.x*=.85;
+        player.legR.rotation.x*=.85;
+
+        player.armL.rotation.x*=.85;
+        player.armR.rotation.x*=.85;
+    }
+}
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function updateCamera(dt){
+
+    if(!player) return;
+
+    const target=
+        player.group.position.clone();
+
+    target.y+=3;
+
+    const distance=9;
+
+    const horizontal=
+        Math.cos(cameraPitch)*distance;
+
+    const desired=
+        new THREE.Vector3(
+            target.x+
+            Math.sin(cameraYaw)*horizontal,
+
+            target.y+
+            Math.sin(cameraPitch)*distance,
+
+            target.z+
+            Math.cos(cameraYaw)*horizontal
+        );
+
+    camera.position.lerp(
+        desired,
+        1-Math.pow(.001,dt)
+    );
+
+    camera.lookAt(target);
+}
+
+/* =========================================================
+   DAY / NIGHT
+========================================================= */
+
+function updateDayNight(dt){
+
+    worldTime+=dt*.008;
+
+    if(worldTime>1)
+        worldTime=0;
+
+    const angle=
+        worldTime*Math.PI*2;
+
+    const sunX=
+        Math.cos(angle)*700;
+
+    const sunY=
+        Math.sin(angle)*700;
+
+    const sunZ=300;
+
+    sun.position.set(
+        sunX,
+        Math.max(80,sunY),
+        sunZ
+    );
+
+    const daylight=
+        Math.max(
+            .08,
+            Math.sin(angle)*.5+.5
+        );
+
+    sun.intensity=
+        .5+
+        daylight*2.5;
+
+    ambient.intensity=
+        .65+
+        daylight*1.25;
+
+    const skyDay=
+        new THREE.Color(
+            0x91b9d1
+        );
+
+    const skyNight=
+        new THREE.Color(
+            0x07101e
+        );
+
+    const sky=
+        skyNight.clone().lerp(
+            skyDay,
+            daylight
+        );
+
+    scene.background.copy(sky);
+    scene.fog.color.copy(sky);
+
+    document.getElementById("weather")
+        .textContent=
+        daylight>.35
+        ?"☀️ روز آرام"
+        :"🌙 شب";
+}
+
+/* =========================================================
+   MINIMAP
+========================================================= */
+
+const miniCanvas=
+    document.getElementById("miniCanvas");
+
+const miniCtx=
+    miniCanvas.getContext("2d");
+
+function updateMini(){
+
+    if(!player) return;
+
+    const c=miniCtx;
+
+    c.clearRect(
+        0,0,180,180
+    );
+
+    c.fillStyle="#101820";
+    c.fillRect(
+        0,0,180,180
+    );
+
+    c.strokeStyle="rgba(255,255,255,.12)";
+    c.lineWidth=2;
+
+    for(let i=0;i<180;i+=30){
+
+        c.beginPath();
+        c.moveTo(i,0);
+        c.lineTo(i,180);
+        c.stroke();
+
+        c.beginPath();
+        c.moveTo(0,i);
+        c.lineTo(180,i);
+        c.stroke();
+    }
+
+    const scale=.09;
+
+    const px=
+        90+
+        player.group.position.x*scale;
+
+    const pz=
+        90+
+        player.group.position.z*scale;
+
+    c.fillStyle="#e7c66b";
+
+    c.fillRect(
+        20,
+        82,
+        140,
+        4
+    );
+
+    c.fillStyle="#4ca9d8";
+
+    c.fillRect(
+        110,
+        20,
+        4,
+        140
+    );
+
+    c.fillStyle="#ffffff";
+
+    c.beginPath();
+    c.arc(
+        Math.max(4,Math.min(176,px)),
+        Math.max(4,Math.min(176,pz)),
+        5,
+        0,
+        Math.PI*2
+    );
+
+    c.fill();
+}
+
+/* =========================================================
+   LOCATION
+========================================================= */
+
+function updateLocation(){
+
+    if(!player) return;
+
+    const x=player.group.position.x;
+    const z=player.group.position.z;
+
+    let name="حومه شهر";
+
+    if(
+        x>-450 &&
+        x<350 &&
+        z>-320 &&
+        z<350
+    ){
+        name="شهر مرکزی";
+    }
+
+    if(
+        x>300 &&
+        z<-100
+    ){
+        name="ساحل";
+    }
+
+    if(
+        Math.abs(x)>500 ||
+        Math.abs(z)>500
+    ){
+        name="منطقه وحشی";
+    }
+
+    document.getElementById(
+        "locationName"
+    ).textContent=name;
+
+    document.getElementById(
+        "coords"
+    ).textContent=
+        Math.round(x)+
+        " / "+
+        Math.round(z);
+}
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+let messageTimer;
+
+function showMessage(text){
+
+    message.textContent=text;
+    message.style.opacity="1";
+
+    clearTimeout(messageTimer);
+
+    messageTimer=
+        setTimeout(()=>{
+            message.style.opacity="0";
+        },1800);
+}
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(!camera||!renderer)
+            return;
+
+        camera.aspect=
+            window.innerWidth/
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight,
+            false
+        );
+    }
+);
+
+/* =========================================================
+   AUTO SAVE
+========================================================= */
+
+setInterval(
+    savePosition,
+    5000
+);
+
+window.addEventListener(
+    "beforeunload",
+    savePosition
+);
+
+/* =========================================================
+   GAME LOOP
+========================================================= */
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    const dt=
+        Math.min(
+            clock.getDelta(),
+            .05
+        );
+
+    updatePlayer(dt);
+    updateCamera(dt);
+    updateDayNight(dt);
+    updateMini();
+    updateLocation();
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+
+async function init(){
+
+    try{
+
+        loadMessage("راه‌اندازی موتور سه‌بعدی...");
+
+        createRenderer();
+        createScene();
+
+        loadMessage("تنظیم نورپردازی...");
+
+        createLights();
+
+        createTerrain();
+
+        createWater();
+
+        createRoadNetwork();
+
+        createCity();
+
+        createForest();
+
+        createRocks();
+
+        createPlayer();
+
+        setupKeyboard();
+        setupJoystick();
+        setupCameraTouch();
+
+        camera.position.set(
+            -85,
+            12,
+            72
+        );
+
+        camera.lookAt(
+            player.group.position
+        );
+
+        loadMessage("جهان آماده است...");
+
+        await new Promise(
+            resolve=>setTimeout(
+                resolve,
+                600
+            )
+        );
+
+        const loading=
+            document.getElementById("loading");
+
+        loading.style.opacity="0";
+
+        setTimeout(
+            ()=>{
+                loading.style.display="none";
+            },
+            500
+        );
+
+        showMessage(
+            "👻 به Ghost Open World خوش آمدی"
+        );
+
+        animate();
+
+    }catch(error){
+
+        console.error(error);
+
+        loadMessage(
+            "خطا در بارگذاری بازی"
+        );
+
+        document.querySelector(".loader")
+            .style.display="none";
+
+        document.querySelector(".loadText")
+            .textContent=
+            "صفحه را دوباره بارگذاری کنید";
+    }
+}
+
+init();
+
+</script>
+
+</body>
+  </html>
